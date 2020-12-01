@@ -1,4 +1,8 @@
 using BeanBot.Data;
+using BeanBot.Services;
+using Discord;
+using Discord.Commands;
+using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -35,10 +39,23 @@ namespace BeanBot
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddControllersWithViews();
+            services.AddSingleton(new DiscordShardedClient(new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Verbose,
+                MessageCacheSize = 1000
+            }))
+            .AddSingleton(new CommandService(new CommandServiceConfig
+            {
+                LogLevel = LogSeverity.Verbose,
+                DefaultRunMode = RunMode.Async,
+                CaseSensitiveCommands = false
+            }))
+            .AddSingleton<LogService>()
+            .AddSingleton<StartupService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public async void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -66,6 +83,11 @@ namespace BeanBot
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+
+            var provider = app.ApplicationServices;
+
+            provider.GetRequiredService<LogService>();
+            await provider.GetRequiredService<StartupService>().StartAsync();
         }
     }
 }
