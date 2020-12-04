@@ -1,6 +1,12 @@
+using Amazon.SQS;
 using BeanBot.Data;
+using BeanBot.EventHandlers;
+using BeanBot.Helpers;
+using BeanBot.Models;
 using BeanBot.Services;
+using BeanBot.Services.AWS;
 using Discord;
+using Discord.Addons.Interactive;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Builder;
@@ -50,8 +56,16 @@ namespace BeanBot
                 DefaultRunMode = RunMode.Async,
                 CaseSensitiveCommands = false
             }))
+            .AddSingleton<InteractiveService>()
             .AddSingleton<LogService>()
-            .AddSingleton<StartupService>();
+            .AddSingleton<StartupService>()
+            .AddSingleton<CommandHandler>();
+            
+            var appSettingsSection = Configuration.GetSection("ServiceConfiguration");
+            services.AddAWSService<IAmazonSQS>();
+            services.Configure<ServiceConfiguration>(appSettingsSection);
+            services.AddTransient<IAWSSQSService, AWSSQSService>();
+            services.AddTransient<IAWSSQSHelper, AWSSQSHelper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -88,6 +102,7 @@ namespace BeanBot
 
             provider.GetRequiredService<LogService>();
             await provider.GetRequiredService<StartupService>().StartAsync();
+            await provider.GetRequiredService<CommandHandler>().InitializeCommandsAsync();
         }
     }
 }
