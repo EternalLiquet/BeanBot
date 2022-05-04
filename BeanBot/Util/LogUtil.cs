@@ -20,7 +20,7 @@ namespace BeanBot.Util
 
             Log.Information("Logger Configuration complete");
         }
-        private static async Task LogAsync(LogMessage message)
+        public static async Task LogAsync(LogMessage message)
         {
             var severity = message.Severity switch
             {
