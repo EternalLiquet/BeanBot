@@ -31,7 +31,8 @@ namespace BeanBot
                 .AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
                 {
                     LogLevel = LogSeverity.Verbose,
-                    MessageCacheSize = 1000
+                    MessageCacheSize = 1000,
+                    GatewayIntents = GatewayIntents.All
                 }))
                 .AddSingleton<DiscordStartup>();
         }
