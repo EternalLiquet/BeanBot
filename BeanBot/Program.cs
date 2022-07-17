@@ -1,54 +1,30 @@
-using BeanBot.Util;
-using Discord;
-using Discord.WebSocket;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Events;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+
 using System;
-using System.Collections.Generic;
+using BeanBot;
+using BeanBot.Utils;
+using Serilog;
+using Microsoft.Extensions.Configuration;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace BeanBot
 {
-    public class Program
+    class Program
     {
-
-        private static DiscordSocketClient _discordClient;
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
-            try
-            {
-                Log.Information("Starting bot application");
-                CreateHostBuilder(args).Build().Run();
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(ex, "Bot application start-up failed");
-            }
-            finally
-            {
-                Log.CloseAndFlush();
-            }
-        }
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("Config/appSettings.json", false)
+                .Build();
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .UseSerilog()
-                .ConfigureHostConfiguration(configHost =>
-                {
-                    configHost.SetBasePath(Directory.GetCurrentDirectory());
-                    configHost.AddJsonFile("Config/hostSettings.json", optional: true);
-                    configHost.AddEnvironmentVariables(prefix: "BOT_");
-                    configHost.AddCommandLine(args);
-                })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
+            var serviceProvider = new ServiceCollection()
+                .AddLogging()
+                .AddSingleton(config)
+                .AddSingleton<LogUtils>()
+                .AddSingleton<ExampleClass>()
+                .BuildServiceProvider();
+        }
     }
 }
